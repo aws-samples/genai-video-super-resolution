@@ -1,0 +1,9 @@
+ARG AWS_REGION=us-east-1
+FROM 763104351884.dkr.ecr.${AWS_REGION}.amazonaws.com/pytorch-inference:2.0.0-gpu-py310-cu118-ubuntu20.04-sagemaker
+WORKDIR /workdir
+RUN wget https://github.com/mv-lab/swin2sr/releases/download/v0.0.1/Swin2SR_RealworldSR_X4_64_BSRGAN_PSNR.pth -P /opt/ml/model/
+COPY src/ /opt/ml/model/code
+COPY requirements.txt /workdir
+RUN pip install -r requirements.txt
+EXPOSE 8080
+ENTRYPOINT [ "python", "/usr/local/bin/dockerd-entrypoint.py" ]

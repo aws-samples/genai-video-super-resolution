@@ -1,0 +1,5 @@
+opencv-python
+torch
+requests
+timm
+onnx

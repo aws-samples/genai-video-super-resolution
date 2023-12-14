@@ -1,0 +1,3 @@
+Build:
+ InstanceType: m5.xlarge
+ ParentImage: ami-0aa53dab5294598ec

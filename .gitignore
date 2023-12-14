@@ -1,0 +1,14 @@
+HD/
+models/
+*.pth
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
+.idea/
+model_zoo/
+*.trt
+*.onnx
+.vscode/
+pcluster/bootstrap/headnode/scripts/config
+pcluster/bootstrap/headnode/scripts/create_extract_job.sh
+

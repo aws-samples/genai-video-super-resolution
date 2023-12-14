@@ -1,0 +1,6 @@
+{
+  "input_file_path" : "/videos/test/SD/frames/0002.png",
+  "output_file_path" : "/videos/test/HD/frames/0002-upscaled.png",
+  "job_id" : "1234",
+  "batch_id" : "01"
+}

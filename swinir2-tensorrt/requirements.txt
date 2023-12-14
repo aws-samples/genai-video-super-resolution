@@ -1,0 +1,6 @@
+opencv-python
+torch
+requests
+timm
+tensorrt==8.6.1
+pycuda==2022.2.2

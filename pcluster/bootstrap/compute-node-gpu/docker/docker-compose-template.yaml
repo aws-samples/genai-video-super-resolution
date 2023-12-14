@@ -1,0 +1,39 @@
+services:
+  swinir:
+    image: {{AWS_ACCOUNT}}.dkr.ecr.{{AWS_REGION}}.amazonaws.com/genai-swinir2-4x-super-resolution:latest
+    command: serve
+    ports:
+      - "8888:8080"
+    volumes:
+      - /tmp/genai-video-super-resolution-pcluster/test:/videos/test
+      - /fsx:/fsx
+    environment:
+      - SAGEMAKER_MODEL_SERVER_TIMEOUT=600
+      - CUDA_MODULE_LOADING=LAZY
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  realesrgan:
+    image: {{AWS_ACCOUNT}}.dkr.ecr.{{AWS_REGION}}.amazonaws.com/genai-realesrgan-4x-super-resolution:latest
+    command: serve
+    ports:
+      - "8889:8080"
+    volumes:
+      - /tmp/genai-video-super-resolution-pcluster/test:/videos/test
+      - /fsx:/fsx
+    environment:
+      - SAGEMAKER_MODEL_SERVER_TIMEOUT=600
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

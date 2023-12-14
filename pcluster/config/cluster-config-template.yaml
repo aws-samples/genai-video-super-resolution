@@ -1,0 +1,78 @@
+Region: {{AWS_REGION}}
+Image:
+  Os: alinux2
+HeadNode:
+  InstanceType: t3.large
+  Networking:
+    SubnetId: {{VPC_PUBLIC_SUBNET_ID}}
+  Ssh:
+    KeyName: {{SSH_KEY_PAIR_NAME}}
+  CustomActions:
+    OnNodeConfigured:
+      Script: {{ON_NODE_STARTED_SCRIPT_HEAD_NODE}}
+  Iam:
+    S3Access:
+      - BucketName: {{S3_BUCKET}}
+        EnableWriteAccess: True
+    AdditionalIamPolicies:
+      - Policy: arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+Scheduling:
+  Scheduler: slurm
+  SlurmSettings:
+    Dns:
+      UseEc2Hostnames: true
+  SlurmQueues:
+  - Name: q1
+    ComputeResources:
+    - Name: genai-api-service
+      Instances:
+      - InstanceType: g5.2xlarge
+      MinCount: 0
+      MaxCount: 1
+    Networking:
+      SubnetIds:
+      - {{VPC_PRIVATE_SUBNET_ID}}
+    CustomActions:
+      OnNodeConfigured:
+        Script: {{ON_NODE_STARTED_SCRIPT_GPU_COMPUTE_NODE}}
+    Iam:
+      S3Access:
+        - BucketName: {{S3_BUCKET}}
+          EnableWriteAccess: False
+      AdditionalIamPolicies:
+        - Policy: arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - Policy: arn:aws:iam::aws:policy/EC2InstanceProfileForImageBuilderECRContainerBuilds
+        - Policy: arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser
+    Image:
+      CustomAmi: {{GPU_COMPUTE_NODE_CUSTOM_AMI}}
+  - Name: q2
+    ComputeResources:
+    - Name: video-processing
+      Instances:
+      - InstanceType: c6i.4xlarge
+      MinCount: 1
+      MaxCount: 1
+    Networking:
+      SubnetIds:
+      - {{VPC_PRIVATE_SUBNET_ID}}
+    CustomActions:
+      OnNodeConfigured:
+        Script: {{ON_NODE_STARTED_SCRIPT_CPU_COMPUTE_NODE}}
+    Iam:
+      S3Access:
+        - BucketName: {{S3_BUCKET}}
+          EnableWriteAccess: True
+      AdditionalIamPolicies:
+        - Policy: arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - Policy: arn:aws:iam::aws:policy/EC2InstanceProfileForImageBuilderECRContainerBuilds
+        - Policy: arn:aws:iam::aws:policy/AmazonSSMFullAccess
+SharedStorage:
+  - MountDir: /fsx
+    Name: fsx
+    StorageType: FsxLustre
+    FsxLustreSettings:
+      StorageCapacity: 7200
+      DeploymentType: PERSISTENT_2
+      PerUnitStorageThroughput: 1000
+      DeletionPolicy: Delete
+

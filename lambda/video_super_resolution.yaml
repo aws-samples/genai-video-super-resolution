@@ -1,0 +1,257 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  SourceVideoS3BucketName:
+      Type: String
+      Description: S3 bucket name for the source video content.
+  SourceVideoS3PrefixFilter:
+      Type: String
+      Description: S3 Prefix to filter a lambda function trigger.
+  ExtractScriptFileLocation:
+      Type: String
+      Default: /home/ec2-user/create_extract_job_full.sh
+      Description: The location of the extract job provisioned into Fsx lustre.
+  FrameType:
+      Type: String
+      Default: bmp
+      Description: The default media type of the frame to create from the source video 
+  ParallelClusterHeadNodeEC2InstanceId:
+      Type: String
+      Description: The EC2 instance ID for the parallel cluster head node
+  VideoOutputS3Location:
+      Type: String
+      Description: The S3 bucket and prefix location for the upscaled video
+  SSMResultS3BucketName:
+      Type: String
+      Description: The S3 bucket and prefix location for output from running the SSM commands
+Resources:
+  VideoFrameExtractionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: VideoFrameExtractionLambda
+      Handler: index.submit_job
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 60
+      Code:
+        ZipFile: |
+            import boto3
+            import time
+            import json
+            import random
+            import string
+            import os
+            import urllib
+
+            head_instance = os.getenv('HEAD_INSTANCE')
+            output_bucket = os.getenv('OUTPUT_BUCKET')
+            extract_script = os.getenv('EXTRACT_SCRIPT')
+            frame_type = os.getenv('FRAME_TYPE')
+            ssm_result_bucket = os.getenv('SSM_RESULT_BUCKET')
+
+            def submit_job(event, context):
+                #call systems manager runshell script based on s3 event
+                bucket = event['Records'][0]['s3']['bucket']['name']
+                key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8')
+                video_type = key.split("/")[-3] #currently supports only anime or real
+                is_anime = "NO"
+                if video_type == "anime": 
+                    is_anime = "yes"
+                print(f"key is: {key}")    
+                command = '%s s3://%s/%s %s %s %s'%(extract_script, bucket, key, is_anime, frame_type, output_bucket)
+                print(f"command is: {command}")
+                body = execute_command(command,head_instance)
+                return {
+                    'statusCode': 200,
+                    'body': body
+                }
+                
+            def execute_command(command,instance_id):
+                ssm_client = boto3.client('ssm')
+                s3 = boto3.resource('s3')
+                bucket = s3.Bucket(ssm_result_bucket)
+                username='ec2-user'
+                response = ssm_client.send_command(
+                        InstanceIds=[
+                            "%s"%instance_id
+                                ],
+                        DocumentName="AWS-RunShellScript",
+                        OutputS3BucketName=ssm_result_bucket,
+                        OutputS3KeyPrefix="ssm",
+                        Parameters={
+                            'commands':[
+                                'sudo su - %s -c "%s"'%(username,command)
+                                  ]
+                              },
+                        )
+                command_id = response['Command']['CommandId']
+                time.sleep(1)
+                output = ssm_client.get_command_invocation(
+                  CommandId=command_id,
+                  InstanceId=instance_id,
+                )
+                while output['Status'] != 'Success':
+                  time.sleep(1)
+                  output = ssm_client.get_command_invocation(CommandId=command_id,InstanceId=instance_id)
+                  if (output['Status'] == 'Failed') or (output['Status'] =='Cancelled') or (output['Status'] == 'TimedOut'):
+                    break
+                body = ''
+                files = list(bucket.objects.filter(Prefix='ssm/%s/%s/awsrunShellScript/0.awsrunShellScript'%(command_id,instance_id)))
+                for obj in files:
+                  key = obj.key
+                  body += str(obj.get()['Body'].read(), 'UTF')
+                return body
+      Runtime: python3.11
+      Environment:
+        Variables: 
+           EXTRACT_SCRIPT: !Ref ExtractScriptFileLocation
+           FRAME_TYPE: !Ref FrameType
+           HEAD_INSTANCE: !Ref ParallelClusterHeadNodeEC2InstanceId
+           OUTPUT_BUCKET: !Ref VideoOutputS3Location
+           SSM_RESULT_BUCKET: !Ref SSMResultS3BucketName
+
+  CustomResourceLambdaFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+            from __future__ import print_function
+            import json
+            import boto3
+            import cfnresponse
+            
+            SUCCESS = "SUCCESS"
+            FAILED = "FAILED"
+            
+            print('Loading function')
+            s3 = boto3.resource('s3')
+            
+            def lambda_handler(event, context):
+                print("Received event: " + json.dumps(event, indent=2))
+                responseData={}
+                try:
+                    if event['RequestType'] == 'Delete':
+                        print("Request Type:",event['RequestType'])
+                        Bucket=event['ResourceProperties']['Bucket']
+                        delete_notification(Bucket)
+                        print("Sending response to custom resource after Delete")
+                    elif event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
+                        print("Request Type:",event['RequestType'])
+                        LambdaArn=event['ResourceProperties']['LambdaArn']
+                        Bucket=event['ResourceProperties']['Bucket']
+                        FilterPrefix=event['ResourceProperties']['FilterPrefix']
+                        add_notification(LambdaArn, Bucket, FilterPrefix)
+                        responseData={'Bucket':Bucket}
+                        print("Sending response to custom resource")
+                    responseStatus = 'SUCCESS'
+                except Exception as e:
+                    print(f"Failed to process: {e}")
+                    responseStatus = 'FAILED'
+                    responseData = {'Failure': 'Something bad happened.'}
+                cfnresponse.send(event, context, responseStatus, responseData, "CustomResourcePhysicalID")
+
+            def add_notification(LambdaArn, Bucket, FilterPrefix):
+                bucket_notification = s3.BucketNotification(Bucket)
+                response = bucket_notification.put(
+                  NotificationConfiguration={
+                    'LambdaFunctionConfigurations': [
+                      {
+                          'LambdaFunctionArn': LambdaArn,
+                          'Events': [
+                              's3:ObjectCreated:*'
+                          ],
+                          'Filter': {
+                            'Key': {
+                                'FilterRules': [
+                                    {
+                                        'Name': 'prefix',
+                                        'Value': FilterPrefix
+                                    },
+                                ]
+                            }
+                        }
+                      }
+                    ]
+                  }
+                )
+                print("Put request completed....")
+              
+            def delete_notification(Bucket):
+                bucket_notification = s3.BucketNotification(Bucket)
+                response = bucket_notification.put(
+                    NotificationConfiguration={}
+                )
+                print("Delete request completed....")
+      Runtime: python3.10
+      Timeout: 50
+
+  LambdaTrigger:
+    Type: 'Custom::LambdaTrigger'
+    DependsOn: LambdaInvokePermission
+    Properties:
+      ServiceToken: !GetAtt CustomResourceLambdaFunction.Arn
+      LambdaArn: !GetAtt VideoFrameExtractionFunction.Arn
+      Bucket: !Ref SourceVideoS3BucketName
+      FilterPrefix: !Ref SourceVideoS3PrefixFilter
+
+  LambdaInvokePermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt VideoFrameExtractionFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: !Sub 'arn:aws:s3:::${SourceVideoS3BucketName}'
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+      Policies:
+      - PolicyName: VideoSuperResCloudWatchLogPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
+          - Effect: Allow
+            Action:
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/submit_video_extraction_job:*'
+      - PolicyName: VideoSuperResS3Policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - s3:GetObject
+            - s3:ListObject
+            - s3:PutBucketNotification
+            - s3:ListBucket
+            Resource: 
+              - !Join ["",[!Sub 'arn:aws:s3:::${SourceVideoS3BucketName}/','*']]
+              - !Join ["",[!Sub 'arn:aws:s3:::${SourceVideoS3BucketName}']]
+              - !Join ["",[!Sub 'arn:aws:s3:::${SSMResultS3BucketName}']]
+              - !Join ["",[!Sub 'arn:aws:s3:::${SSMResultS3BucketName}/', '*']]
+Outputs:
+  LambdaFunctionName:
+    Description: Name of the Lambda Function
+    Value: !Ref VideoFrameExtractionFunction
+  LambdaExecutionRole:
+    Description: The Labmda Execution Role created for the function
+    Value: !Ref LambdaExecutionRole
+  

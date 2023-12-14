@@ -1,0 +1,12 @@
+ARG AWS_REGION=us-east-1
+FROM 763104351884.dkr.ecr.${AWS_REGION}.amazonaws.com/pytorch-inference:2.0.0-gpu-py310-cu118-ubuntu20.04-sagemaker
+WORKDIR /workdir
+RUN wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth -P /opt/ml/model/
+RUN wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-animevideov3.pth -P /opt/ml/model/
+RUN wget https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.3.pth -P /opt/ml/model/
+RUN wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.2.4/RealESRGAN_x4plus_anime_6B.pth -P /opt/ml/model/
+COPY src/ /opt/ml/model/code/
+COPY requirements.txt /workdir
+RUN pip install -r requirements.txt
+EXPOSE 8080
+ENTRYPOINT [ "python", "/usr/local/bin/dockerd-entrypoint.py" ]
