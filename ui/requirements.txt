@@ -1,2 +1,2 @@
-gradio==3.50.2
+gradio==4.11.0
 boto3
