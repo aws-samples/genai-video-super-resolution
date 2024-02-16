@@ -25,7 +25,7 @@ The following section contains the detail about how to setup a video super resol
 
 * A development environment with docker installed. (This solution has been tested in a SageMaker notebook instance with g5.2xlarge instance type)
 * Permission to access to ECR with create repository and push docker images to the registry
-* Clone the repository: git clone https://gitlab.aws.dev/weteh/genai-video-super-resolution
+* Clone the repository: git clone https://github.com/aws-samples/genai-video-super-resolution
 * An S3 bucket where the media contents, scripts and other dependencies are stored.
 
 ### Working With Real-ESRGAN Model 
