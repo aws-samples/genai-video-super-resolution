@@ -158,7 +158,7 @@ The result of running the bash script above would upload the bootstrap scripts t
 4. Create the ParallelCluster configuration file. 
 ```
 cd pcluster/config
- ./install.sh -s [s3 bucket name (DO NOT INCLUDE s3://) where the cluster nodes should be given access to] -k [ssh keypair name to use]  -v [private subnet ID] -u [public subnet ID]  -b -b [gpu compute node bootstrap script s3 location] -d [cpu compute node bootstrap script s3 location] -n [head node bootstrap script s3 location] -g [custom ami for the gpu compute node]
+ ./install.sh -s [s3 bucket name (DO NOT INCLUDE s3://) where the cluster nodes should be given access to] -k [ssh keypair name to use]  -v [private subnet ID] -u [public subnet ID]  -b [gpu compute node bootstrap script s3 location] -d [cpu compute node bootstrap script s3 location] -n [head node bootstrap script s3 location] -g [custom ami for the gpu compute node] -r [aws region]
 }
 ```
 

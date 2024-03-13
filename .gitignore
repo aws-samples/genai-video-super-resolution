@@ -10,4 +10,4 @@ model_zoo/
 .vscode/
 pcluster/bootstrap/headnode/scripts/config
 pcluster/bootstrap/headnode/scripts/create_extract_job.sh
-
+docker-compose.yaml
