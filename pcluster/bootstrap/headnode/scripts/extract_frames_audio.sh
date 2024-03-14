@@ -16,7 +16,8 @@ source_url_presign=$(aws s3 presign ${S3_SRC})
 
 #VID_SRC=${source_url_presign%\?*}
 VID_SRC=${source_url_presign}
-VID_BASE=$(basename $VID_SRC)
+VID_FILENAME=${VID_SRC%\?*}
+VID_BASE=$(basename $VID_FILENAME)
 VID_FILE=${VID_BASE%.*}
 VID_EXT=${VID_BASE##*.}
 

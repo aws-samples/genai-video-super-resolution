@@ -18,7 +18,7 @@ output_dir=${output_base}_${task_id}
 
 if [[ ! -d $output_dir ]]; then
         echo "${output_dir} not found"
-        exit 1
+        mkdir -p $output_dir 
 fi
 
 echo ${task_id} > ${output_dir}/task_id
