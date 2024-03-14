@@ -216,7 +216,7 @@ An example output from a successful cluster creation run:
 When a video content is uploaded to S3 bucket, an S3 event is trigger to kick off the upscaling pipeline process. For this, we use a lambda function as the handler for the process. This repository provides a cloudformation template for provisioning the lambda function and the associated event hook for a given S3 bucket location. To launch the cloudformation stack, you can use the console, or AWS CLI. Simply provide the following parameters to CloudFormation at provisioning time:
 
 * Source Video S3 Bucket Name - This is the name of an S3 bucket where your source video content will be uploaded. For instance: *my-video-super-resolution-bucket*
-* SourceVideoS3PrefixFilter - The S3 Prefix that the lambda function is configured to trigger when a new object is created.
+* SourceVideoS3PrefixFilter - The S3 Prefix that the lambda function is configured to trigger when a new object is created. For instance: *data/orig/*
 * ParallelCluster HaedNode EC2 Instance Id - This is the EC2 instance ID for the head node provisioned in the previous step. For instance: *i-0cba84219683f31c9*
 * Upscaled Video Output S3Location - The S3 location where the upscaled video will be stored. For instance: *s3://my-video-super-resolution-bucket/data/final/*
 * SSM Result bucket name - the name of the S3 bucket where the SSM output will be stored. For instance: *my-video-super-resolution-bucket*
