@@ -260,6 +260,7 @@ In addition to launching the Gradio UI above to perform any video super resoluti
 * Upload your media file (mp4) to the S3 path following the source path you had configured in the bootstrap script. The actual source path must follow the convention as followed: 
 
      i. The prefix must contain the type (either real or anime)
+
      ii. An uuid that as a unique task ID required by the application. The uuid must follow the output format of the UUID generator from a linux command: `uuidgen` (e.g. cf4f4935-59bc-4fbe-92f1-dc1d4c50ae96)
 
 * For example, assume you have an animation movie and a generated UUID (cf4f4935-59bc-4fbe-92f1-dc1d4c50ae96), your source video would be uploaded to s3://<your video super resolution bucket>/<S3 prefix to source video>/anime/<UUID>/ to align the path with your bootstrap script.
