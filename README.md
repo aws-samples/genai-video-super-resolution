@@ -263,10 +263,10 @@ In addition to launching the Gradio UI above to perform any video super resoluti
 
      ii. An uuid that as a unique task ID required by the application. The uuid must follow the output format of the UUID generator from a linux command: `uuidgen` (e.g. cf4f4935-59bc-4fbe-92f1-dc1d4c50ae96)
 
-* For example, assume you have an animation movie and a generated UUID (cf4f4935-59bc-4fbe-92f1-dc1d4c50ae96), your source video would be uploaded to s3://<your video super resolution bucket>/<S3 prefix to source video>/anime/<UUID>/ to align the path with your bootstrap script.
-* Assume you have an drama movie and a generated UUID (cf4f4935-59bc-4fbe-92f1-dc1d4c50ae97), your source video would be uploaded to s3://<your video super resolution bucket>/<S3 prefix to source video>/real/<UUID>/ to align the path with your bootstrap script.
-* An example path: s3://mytest-video-super-resolution/data/src/real/cf4f4935-59bc-4fbe-92f1-dc1d4c50ae96/
-* If the job runs successfully, the upscaled video would be written to the S3 location where you've configured as the destination in the bootstrap script. For example, s3://mytest-video-super-resolution/data/final/cf4f4935-59bc-4fbe-92f1-dc1d4c50ae96/
+* For example, assume you have an animation movie and a generated UUID (cf4f4935-59bc-4fbe-92f1-dc1d4c50ae96), your source video would be uploaded to s3://[your video super resolution bucket]/[S3 prefix to source video]/anime/[unique UUID]/ to align the path with your bootstrap script.
+* Assume you have an drama movie and a generated UUID (cf4f4935-59bc-4fbe-92f1-dc1d4c50ae97), your source video would be uploaded to s3://[your video super resolution bucket]/[S3 prefix to source video]/real/[unique UUID]/ to align the path with your bootstrap script.
+* An example path: *s3://mytest-video-super-resolution/data/src/real/cf4f4935-59bc-4fbe-92f1-dc1d4c50ae96/*
+* If the job runs successfully, the upscaled video would be written to the S3 location where you've configured as the destination in the bootstrap script. For example, *s3://mytest-video-super-resolution/data/final/cf4f4935-59bc-4fbe-92f1-dc1d4c50ae96/*
 
 ## License
 N.B.: Although this repository is released under the MIT-0 license, its Dockerfile (i.e. Real-ESRGAN)
