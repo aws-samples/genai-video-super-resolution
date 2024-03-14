@@ -268,6 +268,12 @@ In addition to launching the Gradio UI above to perform any video super resoluti
 * An example path: *s3://mytest-video-super-resolution/data/src/real/cf4f4935-59bc-4fbe-92f1-dc1d4c50ae96/*
 * If the job runs successfully, the upscaled video would be written to the S3 location where you've configured as the destination in the bootstrap script. For example, *s3://mytest-video-super-resolution/data/final/cf4f4935-59bc-4fbe-92f1-dc1d4c50ae96/*
 
+## Clean Up
+If you are done experimenting with the video super resolution solution, simply remove the cluster with a single command as followed:
+
+```pcluster delete-cluster --cluster-name CLUSTER_NAME --region REGION```
+
+
 ## License
 N.B.: Although this repository is released under the MIT-0 license, its Dockerfile (i.e. Real-ESRGAN)
 use the third party Real-ESRGAN project. The Real-ESRGAN project's licensing includes the BSD-3-Clause license.
