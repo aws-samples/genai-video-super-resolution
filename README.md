@@ -271,7 +271,9 @@ In addition to launching the Gradio UI above to perform any video super resoluti
 ## Clean Up
 If you are done experimenting with the video super resolution solution, simply remove the cluster with a single command as followed:
 
-```pcluster delete-cluster --cluster-name CLUSTER_NAME --region REGION```
+```pcluster delete-cluster --cluster-name CLUSTER_NAME --region REGION
+   aws cloudformation delete-stack --stack-name STACK-NAME
+```
 
 
 ## License
