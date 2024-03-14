@@ -254,11 +254,14 @@ We recommend [this](https://aws.amazon.com/solutions/guidance/hyperscale-media-s
 
 
 ### Headless Testing
-In addition to launching the Gradio UI above to perform any video super resolution, you could also use test and validate the end to end upscaling wihtout using the UI. To do this, you would do the following step:
+In addition to launching the Gradio UI above to perform any video super resolution, you could also test and validate the end to end upscaling wihtout using the UI. To do this, you would do the following step:
 
 * Determine whether the video file is an animation or standard media type (non animation). 
-* Upload your media file (mp4) to the S3 path following the source path you had configured in the bootstrap script. The actual source path must follow the following convention: 
-     i. The prefix must contain the type (either real or anime), and an uuid that as a unique task ID required by the application. The uuid must follow the output format of the UUID generator from a linux command: `uuidgen` 
+* Upload your media file (mp4) to the S3 path following the source path you had configured in the bootstrap script. The actual source path must follow the convention as followed: 
+
+     i. The prefix must contain the type (either real or anime)
+     ii. An uuid that as a unique task ID required by the application. The uuid must follow the output format of the UUID generator from a linux command: `uuidgen` (e.g. cf4f4935-59bc-4fbe-92f1-dc1d4c50ae96)
+
 * For example, assume you have an animation movie and a generated UUID (cf4f4935-59bc-4fbe-92f1-dc1d4c50ae96), your source video would be uploaded to s3://<your video super resolution bucket>/<S3 prefix to source video>/anime/<UUID>/ to align the path with your bootstrap script.
 * Assume you have an drama movie and a generated UUID (cf4f4935-59bc-4fbe-92f1-dc1d4c50ae97), your source video would be uploaded to s3://<your video super resolution bucket>/<S3 prefix to source video>/real/<UUID>/ to align the path with your bootstrap script.
 * An example path: s3://mytest-video-super-resolution/data/src/real/cf4f4935-59bc-4fbe-92f1-dc1d4c50ae96/
