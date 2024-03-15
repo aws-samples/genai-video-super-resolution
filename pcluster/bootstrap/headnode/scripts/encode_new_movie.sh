@@ -14,7 +14,15 @@ pad_len=${#frames}
 abitrate=$(cat ${OUT_DIR}/abitrate)
 
 SECONDS=0
-ffmpeg -framerate ${vfps} -i ${OUT_DIR}/TGT_FRAMES/${base_name}_%0${pad_len}d.${image_type}  -i ${OUT_DIR}/AUDIO/${base_name}.${acodec} -c:a copy -b:a ${abitrate} -shortest -c:v libx264 -pix_fmt yuv420p ${OUT_DIR}/${base_name}_final_upscaled.mp4
+
+# Check if audio codec is found, if not do not encode audio because the original video does not have any audios
+if [ -z "${acodec}" ]
+then
+  ffmpeg -framerate ${vfps} -i ${OUT_DIR}/TGT_FRAMES/${base_name}_%0${pad_len}d.${image_type}  -shortest -c:v libx264 -pix_fmt yuv420p ${OUT_DIR}/${base_name}_final_upscaled.mp4
+else
+  ffmpeg -framerate ${vfps} -i ${OUT_DIR}/TGT_FRAMES/${base_name}_%0${pad_len}d.${image_type}  -i ${OUT_DIR}/AUDIO/${base_name}.${acodec} -c:a copy -b:a ${abitrate} -shortest -c:v libx264 -pix_fmt yuv420p ${OUT_DIR}/${base_name}_final_upscaled.mp4
+fi
+
 duration=$SECONDS
 
 aws --region us-east-1 cloudwatch put-metric-data --namespace SuperRes/tasks --unit Seconds --value $duration --dimensions task_id=$task_id,phase=encode --metric-name duration
@@ -22,6 +30,6 @@ aws --region us-east-1 cloudwatch put-metric-data --namespace SuperRes/tasks --u
 
 output_s3_key=${TGT_S3_PREFIX}/${task_id}/${base_name}_final_upscaled.mp4
 
-aws s3 cp ${OUT_DIR}/${base_name}_final_upscaled.mp4 ${output_s3_key}
+aws s3 cp ${OUT_DIR}/${base_name}_final_upscaled.mp4 ${output_s3_key} 
 echo ${output_s3_key} > ${OUT_DIR}/output_s3_key
 echo uploaded > ${OUT_DIR}/pipeline_status

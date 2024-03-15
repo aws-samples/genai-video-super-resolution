@@ -55,7 +55,12 @@ then
 fi
 
 SECONDS=0
-ffmpeg -i $VID_SRC -map 0:a ${OUT_DIR}/AUDIO/${VID_FILE}.${ACODEC} -acodec copy -s ${VRES}  -fps_mode passthrough ${OUT_DIR}/SRC_FRAMES/${VID_FILE}_%0${pad_len}d.${FRAME_TYPE}
+if [ -z "${ACODEC}" ]
+then
+  ffmpeg -i $VID_SRC -acodec copy -s ${VRES}  -fps_mode passthrough ${OUT_DIR}/SRC_FRAMES/${VID_FILE}_%0${pad_len}d.${FRAME_TYPE}
+else
+  ffmpeg -i $VID_SRC -map 0:a ${OUT_DIR}/AUDIO/${VID_FILE}.${ACODEC} -acodec copy -s ${VRES}  -fps_mode passthrough ${OUT_DIR}/SRC_FRAMES/${VID_FILE}_%0${pad_len}d.${FRAME_TYPE}
+fi
 extract_duration=$SECONDS
 
 aws --region us-east-1 cloudwatch put-metric-data --namespace SuperRes/tasks --unit Seconds --value $extract_duration --dimensions task_id=$task_id,phase=extract --metric-name duration
